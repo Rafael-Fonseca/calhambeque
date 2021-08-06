@@ -7,6 +7,9 @@ from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.screenmanager import Screen, ScreenManager
 
+from logotype import LogotipoVertical
+from new_car import ScNewCar
+
 
 class Field(GridLayout):
     def __init__(self, name, bg):
@@ -33,17 +36,24 @@ class Field(GridLayout):
             Rectangle(pos=self.pos, size=self.size)
 
 
-class LogotipoVertical(BoxLayout):
-    def __init__(self, height=100, text='Calhambeque', font_size=30, **kwargs):
-        super().__init__(**kwargs)
-        self.orientation = 'vertical'
-        self.size_hint_y = None
-        self.height = height
-        self.add_widget(Label(text=text, font_size=font_size))
+class CarSpace:
+    def plot_cars(self):
+        karts = ['1', '2', '3']
+
+        cars_space = ScrollView()
+        cars_space.view = GridLayout(cols=1, size_hint=(1, None))
+        cars_space.add_widget(cars_space.view)
+        cars_space.view.bind(minimum_height=cars_space.view.setter('height'))  # Mantem a tela ao soltar o scroll
+        _ = 0
+        for kart in karts:
+            cars_space.view.add_widget(Field(kart, _ % 2 == 0))
+            _ += 1
+        return cars_space
 
 
 class NewCar(BoxLayout):
     def __init__(self,
+                 sm,
                  size=(0, 60),
                  size_hint=(1, None),
                  text='Novo Carro',
@@ -52,41 +62,36 @@ class NewCar(BoxLayout):
         super().__init__(**kwargs)
         self.size = size
         self.size_hint = size_hint
-        self.add_widget(Button(text=text, font_size=font_size
-                               #on_release > Chama Screen Add Car
+        self.sm = sm
+        self.add_widget(Button(text=text, font_size=font_size,
+                               on_release=self.change_screen
                                ))
 
+    def change_screen(self, *args):
+        # Se retirar o args dá problema, uma vez que o kivy utiliza argumentos para chamar o on_release
+        self.sm.current = 'ScNewCar'
 
-class MyCars:
-    base = GridLayout(rows=3)
 
-    '''*******************************
-    **      ESPAÇO DOS CARROS      ***
-    *******************************'''
-    karts = ['1', '2', '3']
+class ScMyCars(Screen):
+    def __init__(self, sm, **kwargs):
+        super().__init__(**kwargs)
+        self.name = 'ScMyCars'
+        self.sm = sm
 
-    cars_space = ScrollView()
-    cars_space.view = GridLayout(cols=1, size_hint=(1, None))
-    cars_space.add_widget(cars_space.view)
-    cars_space.view.bind(minimum_height=cars_space.view.setter('height'))
-    _ = 0
-    for kart in karts:
-        cars_space.view.add_widget(Field(kart, _ % 2 == 0))
-        _ += 1
-
-    base.add_widget(LogotipoVertical())
-    base.add_widget(cars_space)
-    base.add_widget(NewCar())
-
-    home = Screen(name='home')
-    home.add_widget(base)
+    def plot_me(self):
+        base = GridLayout(rows=3)
+        base.add_widget(LogotipoVertical())
+        base.add_widget(CarSpace().plot_cars())
+        base.add_widget(NewCar(self.sm))
+        self.add_widget(base)
+        return self
 
 
 class Calhambeque(App):
     def build(self):
         sm = ScreenManager()
-        home = MyCars()
-        sm.add_widget(home.home)
+        sm.add_widget(ScMyCars(sm).plot_me())
+        sm.add_widget(ScNewCar(sm).plot_me())
         return sm
 
 
