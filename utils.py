@@ -17,3 +17,7 @@ class FileUtils:
             return data
         except FileNotFoundError:
             return []
+
+    def ld_dt(self, file_local):
+        with open(file_local, 'r') as file:
+            return file.read()

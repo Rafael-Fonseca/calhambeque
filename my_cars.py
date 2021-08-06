@@ -11,18 +11,46 @@ from new_car import ScNewCar
 from utils import FileUtils
 
 
+class BtDelete(Button):
+    def __init__(self, name, **kwargs):
+        super().__init__(**kwargs)
+        self.utils = FileUtils()
+        self.name = name
+        self.path = App.get_running_app().user_data_dir + '/'
+
+    def on_release(self):
+        super(BtDelete, self).on_release()
+        dados = self.utils.load_data(self.path + 'data.json')
+        for _ in range(0, len(dados)):
+            if dados[_].get('Apelido:') == self.name:
+                dados.pop(_)
+                break
+        print(dados)
+
+    '''
+    def add_car(self):
+        car_data = self.prepare_car_data()
+        clear_fields(self.apelido, self.marca, self.modelo, self.ano)
+        self.utils.save_data(self.path + 'data.json', car_data)
+    '''
+
+
 class Field(GridLayout):
     def __init__(self, name, bg):
+        self.name = name
         self.bg = bg
         GridLayout.__init__(self,
                             rows=1,
                             padding=10,
                             size=(0, 60),
                             size_hint=(1, None))
-        self.add_widget(Label(text=name))
-        self.add_widget(Button(text='X',
-                               size=(60, 0),
-                               size_hint=(None, 1)))
+        self.add_widget(Label(text=self.name))
+        del_car = BtDelete(name=self.name,
+                           text='X',
+                           size=(60, 0),
+                           size_hint=(None, 1))
+
+        self.add_widget(del_car)
         self.bind(pos=self.change_background)
         self.bind(size=self.change_background)
 
