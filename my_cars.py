@@ -6,9 +6,9 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.screenmanager import Screen, ScreenManager
-
 from logotype import LogotipoVertical
 from new_car import ScNewCar
+from utils import FileUtils
 
 
 class Field(GridLayout):
@@ -37,16 +37,22 @@ class Field(GridLayout):
 
 
 class CarSpace:
-    def plot_cars(self):
-        karts = ['1', '2', '3']
+    def __init__(self, path):
+        self.path = path
+        self.utils = FileUtils()
 
+    def plot_cars(self):
         cars_space = ScrollView()
         cars_space.view = GridLayout(cols=1, size_hint=(1, None))
         cars_space.add_widget(cars_space.view)
         cars_space.view.bind(minimum_height=cars_space.view.setter('height'))  # Mantem a tela ao soltar o scroll
+
+        cars = self.utils.load_data(self.path + 'data.json')
+        # print('cars', '\t', cars)
         _ = 0
-        for kart in karts:
-            cars_space.view.add_widget(Field(kart, _ % 2 == 0))
+        for car in cars:
+            # print('car', '\t', car)
+            cars_space.view.add_widget(Field(car.get('Apelido:'), _ % 2 == 0))
             _ += 1
         return cars_space
 
@@ -73,15 +79,21 @@ class NewCar(BoxLayout):
 
 
 class ScMyCars(Screen):
-    def __init__(self, sm, **kwargs):
+    def __init__(self, sm, path, **kwargs):
         super().__init__(**kwargs)
         self.name = 'ScMyCars'
         self.sm = sm
+        self.path = path
+        self.cars = CarSpace(self.path).plot_cars()
+
+    def on_pre_enter(self):
+        self.cars = CarSpace(self.path).plot_cars()
+        self.plot_me()
 
     def plot_me(self):
         base = GridLayout(rows=3)
         base.add_widget(LogotipoVertical())
-        base.add_widget(CarSpace().plot_cars())
+        base.add_widget(self.cars)
         base.add_widget(NewCar(self.sm))
         self.add_widget(base)
         return self
@@ -89,9 +101,10 @@ class ScMyCars(Screen):
 
 class Calhambeque(App):
     def build(self):
+        path = App.get_running_app().user_data_dir + '/'
         sm = ScreenManager()
-        sm.add_widget(ScMyCars(sm).plot_me())
-        sm.add_widget(ScNewCar(sm).plot_me())
+        sm.add_widget(ScMyCars(sm, path).plot_me())
+        sm.add_widget(ScNewCar(sm, path).plot_me())
         return sm
 
 
